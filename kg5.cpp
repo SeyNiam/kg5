@@ -3,7 +3,7 @@
 //
 // + Убрать лишние точки и линии из 4 для Макса
 // + Залить на Гит
-// - Научиться определять видимость
+// + Научиться определять видимость
 // - Сделать с пунктиром
 // - Сделать с закраской
 // - Отчёт
@@ -17,8 +17,15 @@
 
 #define P 3.14
 #define TEXTCOL 13
-#define MAINCOL 11 
+#define MAINCOL 13 //11 
 #define WHITE 15
+#define BLACK 0
+
+#define GREEN 10
+#define CYAN 11
+#define RED	12
+#define MAGENTA 13
+#define YELLOW	14
 
 using namespace std;
 
@@ -80,6 +87,19 @@ public:
     }
 };
 
+class Surface{
+public:
+    char* name;
+    bool isVisible;
+    COLORREF colour;
+
+    Surface(char* nam, COLORREF col){
+        name = nam;
+        isVisible = true;
+        colour = col;
+    }
+};
+
 // класс фигуры
 class Piramid {
 public:
@@ -89,6 +109,16 @@ public:
     char name_C[2] = "C";
     char name_D[2] = "D";
     int col = MAINCOL;
+
+    char name_ABC[4] = "ABC";
+    char name_ADC[4] = "ADC";
+    char name_ABD[4] = "ABD";
+    char name_BCD[4] = "BCD";
+    Surface ABC = Surface(name_ABC, RED);
+    Surface ADC = Surface(name_ADC, GREEN);
+    Surface ABD = Surface(name_ABD, CYAN);
+    Surface BCD = Surface(name_BCD, YELLOW);
+
 
     // конструктор
     Piramid() {
@@ -104,12 +134,11 @@ public:
 
 
 
-
+        /*
         seenL(A, B, C, D);
         seenL(A, C, B, D);
         seenL(A, D, B, C);
-
-
+        */
     }
 
     // отрисовка
@@ -152,15 +181,17 @@ public:
 
         // Нижнее основание
         line_DDA(A.x, A.y, A.z, B.x, B.y, B.z, col); // линия 1
-        line_DDA(B.x, B.y, B.z, C.x, C.y, C.z, col+1); // линия 2
-        line_DDA(C.x, C.y, C.z, A.x, A.y, A.z, col+2); // линия 3
+        line_DDA(B.x, B.y, B.z, C.x, C.y, C.z, col); // линия 2
+        line_DDA(C.x, C.y, C.z, A.x, A.y, A.z, col); // линия 3
         
         // Боковые грани
-        line_DDA(D.x, D.y, D.z, A.x, A.y, A.z, col+3); // линия 4
-        line_DDA(D.x, D.y, D.z, B.x, B.y, B.z, col+4); // линия 5
-        line_DDA(D.x, D.y, D.z, C.x, C.y, C.z, col-1); // линия 6
+        line_DDA(D.x, D.y, D.z, A.x, A.y, A.z, col); // линия 4
+        line_DDA(D.x, D.y, D.z, B.x, B.y, B.z, col); // линия 5
+        line_DDA(D.x, D.y, D.z, C.x, C.y, C.z, col); // линия 6
 
 
+
+        /*
         int abcd = seenL(A, B, C, D);
         int acbd = seenL(A, C, B, D);
         int adbc = seenL(A, D, B, C);
@@ -170,6 +201,11 @@ public:
             // определение видимости плоскости относительно не принадлежащей ей точки 
             seenS(A, B, C, D);
         }
+        */
+
+
+
+        colouring();
 
 
     }
@@ -510,8 +546,34 @@ public:
                         cout << "\n\n\tsame point\n\n";
                     else if (zOT > zTF) {
                         cout << "line " << Three.name << Four.name << " is not seen.\n";
+                        if (strstr(ABC.name, Three.name) && strstr(ABC.name, Four.name))
+                            ABC.isVisible = false;
+                        else ABC.isVisible = true;
+                        if (strstr(ADC.name, Three.name) && strstr(ADC.name, Four.name))
+                            ADC.isVisible = false;
+                        else ADC.isVisible = true;
+                        if (strstr(ABD.name, Three.name) && strstr(ABD.name, Four.name))
+                            ABD.isVisible = false;
+                        else ABD.isVisible = true;
+                        if (strstr(BCD.name, Three.name) && strstr(BCD.name, Four.name))
+                            BCD.isVisible = false;
+                        else BCD.isVisible = true;
                     }
-                    else cout << "line " << One.name << Two.name << " is not seen.\n";
+                    else { 
+                        cout << "line " << One.name << Two.name << " is not seen.\n"; 
+                        if (strstr(ABC.name, One.name) && strstr(ABC.name, Two.name))
+                            ABC.isVisible = false;
+                        else ABC.isVisible = true;
+                        if (strstr(ADC.name, One.name) && strstr(ADC.name, Two.name))
+                            ADC.isVisible = false;
+                        else ADC.isVisible = true;
+                        if (strstr(ABD.name, One.name) && strstr(ABD.name, Two.name))
+                            ABD.isVisible = false;
+                        else ABD.isVisible = true;
+                        if (strstr(BCD.name, One.name) && strstr(BCD.name, Two.name))
+                            BCD.isVisible = false;
+                        else BCD.isVisible = true;
+                    }
 
                 }
             }
@@ -522,8 +584,7 @@ public:
 
     }
 
-
-
+    // видимость поверхностей, если линии не пересекаются
     int seenS(Point a1, Point a2, Point a3, Point a4) {
         Point p1 = a1, p2 = a2, p3 = a3, p4 = a4;
 
@@ -539,6 +600,18 @@ public:
             int surfCen = (p2.z + p3.z + p4.z) / 3;
             if (p1.z > surfCen) {
                 cout << "\n\n\t Surface " << p2.name << p3.name << p4.name << " is invisible.\n\n";
+                if (!strstr(ABC.name, p1.name))
+                    ABC.isVisible = false;
+                else ABC.isVisible = true;
+                if (!strstr(ADC.name, p1.name))
+                    ADC.isVisible = false;
+                else ADC.isVisible = true;
+                if (!strstr(ABD.name, p1.name))
+                    ABD.isVisible = false;
+                else ABD.isVisible = true;
+                if (!strstr(BCD.name, p1.name))
+                    BCD.isVisible = false;
+                else BCD.isVisible = true;
             }
         }
         // точка p2 ближе остальных к экрану
@@ -546,6 +619,18 @@ public:
             int surfCen = (p1.z + p3.z + p4.z) / 3;
             if (p2.z > surfCen) {
                 cout << "\n\n\t Surface " << p1.name << p3.name << p4.name << " is invisible.\n\n";
+                if (!strstr(ABC.name, p2.name))
+                    ABC.isVisible = false;
+                else ABC.isVisible = true;
+                if (!strstr(ADC.name, p2.name))
+                    ADC.isVisible = false;
+                else ADC.isVisible = true;
+                if (!strstr(ABD.name, p2.name))
+                    ABD.isVisible = false;
+                else ABD.isVisible = true;
+                if (!strstr(BCD.name, p2.name))
+                    BCD.isVisible = false;
+                else BCD.isVisible = true;
             }
         }
         // точка p3 ближе остальных к экрану
@@ -553,6 +638,18 @@ public:
             int surfCen = (p2.z + p1.z + p4.z) / 3;
             if (p3.z > surfCen) {
                 cout << "\n\n\t Surface " << p2.name << p1.name << p4.name << " is invisible.\n\n";
+                if (!strstr(ABC.name, p3.name))
+                    ABC.isVisible = false;
+                else ABC.isVisible = true;
+                if (!strstr(ADC.name, p3.name))
+                    ADC.isVisible = false;
+                else ADC.isVisible = true;
+                if (!strstr(ABD.name, p3.name))
+                    ABD.isVisible = false;
+                else ABD.isVisible = true;
+                if (!strstr(BCD.name, p3.name))
+                    BCD.isVisible = false;
+                else BCD.isVisible = true;
             }
         }
         // точка p4 ближе остальных к экрану
@@ -560,6 +657,18 @@ public:
             int surfCen = (p2.z + p3.z + p1.z) / 3;
             if (p4.z > surfCen) {
                 cout << "\n\n\t Surface " << p2.name << p3.name << p1.name << " is invisible.\n\n";
+                if (!strstr(ABC.name, p4.name))
+                    ABC.isVisible = false;
+                else ABC.isVisible = true;
+                if (!strstr(ADC.name, p4.name))
+                    ADC.isVisible = false;
+                else ADC.isVisible = true;
+                if (!strstr(ABD.name, p4.name))
+                    ABD.isVisible = false;
+                else ABD.isVisible = true;
+                if (!strstr(BCD.name, p4.name))
+                    BCD.isVisible = false;
+                else BCD.isVisible = true;
             }
         }
 
@@ -568,6 +677,83 @@ public:
     }
 
 
+
+
+    void fill(Point p1, Point p2, Point p3, COLORREF col) {
+        // Учёт координаты z при отрисовке в двумерном пространстве
+        // Точка пересечения смотрится не прямо вдоль оси z, а под углом 45, как видит пользователь
+        p1.x -= 0.5 * p1.z, p1.y += 0.5 * p1.z;
+        p2.x -= 0.5 * p2.z, p2.y += 0.5 * p2.z;
+        p3.x -= 0.5 * p3.z, p3.y += 0.5 * p3.z;
+
+        double x1 = p1.x, y1 = p1.y; 
+        double x2 = p2.x, y2 = p2.y;
+        double x3 = p3.x, y3 = p3.y;
+        setcolor(col);
+
+        // нахождение наивысшей, средней и низшей точек
+        if (y2 < y1) {
+            swap(y1, y2);
+            swap(x1, x2);
+        }
+        if (y3 < y1) {
+            swap(y1, y3);
+            swap(x1, x3);
+        }
+        if (y2 > y3) {
+            swap(y2, y3);
+            swap(x2, x3);
+        }
+        float y_const[4]; // x0, y0, x1, y1
+        // y1 - наивысшая точка, y2 - средняя точка, y3 - низшая точка
+        for (int y = y1; y <= y2; y++) {
+            y_const[1] = y_const[3] = y;
+            y_const[0] = x1 + (x2 - x1) * ((y - y1) / (y2 - y1));
+            y_const[2] = x1 + (x3 - x1) * ((y - y1) / (y3 - y1));
+            line(y_const[0], y_const[1], y_const[2], y_const[3]);
+        }
+        for (int y = y2; y <= y3; y++) {
+            y_const[1] = y_const[3] = y;
+            y_const[0] = x2 + (x3 - x2) * ((y - y2) / (y3 - y2));
+            y_const[2] = x1 + (x3 - x1) * ((y - y1) / (y3 - y1));
+            line(y_const[0], y_const[1], y_const[2], y_const[3]);
+        }
+    }
+
+    
+    // закраска
+    void colouring() {
+        int abcd = seenL(A, B, C, D);
+        int acbd = seenL(A, C, B, D);
+        int adbc = seenL(A, D, B, C);
+
+        // если никакие линии не пересекаются
+        if (abcd != 1 && acbd != 1 && adbc != 1) {
+            // определение видимости плоскости относительно не принадлежащей ей точки 
+            seenS(A, B, C, D);
+        }
+
+
+        if (ABC.isVisible) {
+            cout << "\n\tABC is visible\n";
+            fill(A, B, C, ABC.colour);
+        }
+        if (ADC.isVisible) {
+            cout << "\n\tADC is visible\n";
+            fill(A, D, C, ADC.colour);
+        }
+        if (ABD.isVisible) {
+            cout << "\n\tABD is visible\n";
+            fill(A, B, D, ABD.colour);
+        }
+        if (BCD.isVisible) {
+            cout << "\n\tBCD is visible\n";
+            fill(B, C, D, BCD.colour);
+        }
+
+
+
+    }
 
     
 };
