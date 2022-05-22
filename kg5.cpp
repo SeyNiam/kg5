@@ -21,10 +21,10 @@
 #define WHITE 15
 #define BLACK 0
 
-#define GREEN 10
+#define GREEN 2
 #define CYAN 11
-#define RED	12
-#define MAGENTA 13
+#define RED	4
+//#define MAGENTA 13
 #define YELLOW	14
 
 using namespace std;
@@ -131,14 +131,6 @@ public:
         D.x = 50; D.y = 50; D.z = 20;
         D.name = name_D;
         drawPiramid();
-
-
-
-        /*
-        seenL(A, B, C, D);
-        seenL(A, C, B, D);
-        seenL(A, D, B, C);
-        */
     }
 
     // отрисовка
@@ -188,20 +180,6 @@ public:
         line_DDA(D.x, D.y, D.z, A.x, A.y, A.z, col); // линия 4
         line_DDA(D.x, D.y, D.z, B.x, B.y, B.z, col); // линия 5
         line_DDA(D.x, D.y, D.z, C.x, C.y, C.z, col); // линия 6
-
-
-
-        /*
-        int abcd = seenL(A, B, C, D);
-        int acbd = seenL(A, C, B, D);
-        int adbc = seenL(A, D, B, C);
-
-        // если никакие линии не пересекаются
-        if (abcd != 1 && acbd != 1 && adbc != 1) {
-            // определение видимости плоскости относительно не принадлежащей ей точки 
-            seenS(A, B, C, D);
-        }
-        */
 
 
 
@@ -590,13 +568,99 @@ public:
 
         // Учёт координаты z при отрисовке в двумерном пространстве
         // Точка пересечения смотрится не прямо вдоль оси z, а под углом 45, как видит пользователь
-        p1.x -= 0.5 * p1.z,        p1.y += 0.5 * p1.z;
-        p2.x -= 0.5 * p2.z,        p2.y += 0.5 * p2.z;
-        p3.x -= 0.5 * p3.z,        p3.y += 0.5 * p3.z;
-        p4.x -= 0.5 * p4.z,        p4.y += 0.5 * p4.z;
+        p1.x -= 0.5 * p1.z, p1.y += 0.5 * p1.z;
+        p2.x -= 0.5 * p2.z, p2.y += 0.5 * p2.z;
+        p3.x -= 0.5 * p3.z, p3.y += 0.5 * p3.z;
+        p4.x -= 0.5 * p4.z, p4.y += 0.5 * p4.z;
 
+        // сброс к базовому состоянию 
+        ABC.isVisible = true;
+        ADC.isVisible = true;
+        ABD.isVisible = true;
+        BCD.isVisible = true;
+
+
+        // нет пересечениий -- одна из точек в центре на xy
+        // какая к центру ближе, у той и смотрим z
+        Point centerOfAll;
+        centerOfAll.x = (p1.x + p2.x + p3.x + p4.x) / 4;
+        centerOfAll.y = (p1.y + p2.y + p3.y + p4.y) / 4;
+        //centerOfAll.z = (p1.z + p2.z + p3.z + p4.z) / 4;
+
+        int p1Prox, p2Prox, p3Prox, p4Prox;
+        p1Prox = abs(p1.x - centerOfAll.x) + abs(p1.y - centerOfAll.y);
+        p2Prox = abs(p2.x - centerOfAll.x) + abs(p2.y - centerOfAll.y);
+        p3Prox = abs(p3.x - centerOfAll.x) + abs(p3.y - centerOfAll.y);
+        p4Prox = abs(p4.x - centerOfAll.x) + abs(p4.y - centerOfAll.y);
+
+        int res = min(min(p1Prox, p2Prox), min(p3Prox, p4Prox)); // расстояние от центра фигуры до ближайшей точки
+
+        Point closestPt;
+        float surfCen;
+        if (res == p1Prox) {
+            closestPt = p1;
+            surfCen = (p2.z + p3.z + p4.z) / 3;
+        }
+        if (res == p2Prox) {
+            closestPt = p2;
+            surfCen = (p1.z + p3.z + p4.z) / 3;
+        }
+        if (res == p3Prox) {
+            closestPt = p3;
+            surfCen = (p1.z + p2.z + p4.z) / 3;
+        }
+        if (res == p4Prox) {
+            closestPt = p4;
+            surfCen = (p1.z + p2.z + p3.z) / 3;
+        }
+
+        // если ближайшая к центру точка надодится ближе к зрителю, чем центр
+        if (closestPt.z >= surfCen) {
+            cout << "\n\n\t THE Point " << closestPt.name << " is VISIBLE.\n\n";
+
+            // если поверхность не содержит видимой точки
+            if (!strstr(ABC.name, closestPt.name))
+                ABC.isVisible = false; // то эту поверхность не видно
+            else ABC.isVisible = true; // иначе видно
+
+            if (!strstr(ADC.name, closestPt.name))
+                ADC.isVisible = false;
+            else ADC.isVisible = true;
+            if (!strstr(ABD.name, closestPt.name))
+                ABD.isVisible = false;
+            else ABD.isVisible = true;
+            if (!strstr(BCD.name, closestPt.name))
+                BCD.isVisible = false;
+            else BCD.isVisible = true;
+        }
+        else { // ближайшая к центру точка надожится дальше от зрителя, чем центр
+            cout << "\n\n\t THE Point " << closestPt.name << " is NOT VISIBLE AT ALL.\n\n";
+            
+            ABC.isVisible = false;
+            ADC.isVisible = false;
+            ABD.isVisible = false;
+            BCD.isVisible = false;
+
+            // если плоскость НЕ содержит НЕВИДИМУЮ точку
+            if (!strstr(ABC.name, closestPt.name))
+                ABC.isVisible = true; // то она видна
+
+            if (!strstr(ADC.name, closestPt.name))
+                ADC.isVisible = true;
+            if (!strstr(ABD.name, closestPt.name))
+                ABD.isVisible = true;
+            if (!strstr(BCD.name, closestPt.name))
+                BCD.isVisible = true;
+
+
+        }
+        
+
+
+        // gj ,kb;fqitq r yf,k.lfnt. dghbywbgt
+        /*
         // точка p1 ближе остальных к экрану
-        if (p1.z >= p2.z && p1.z >= p3.z && p1.z >= p4.z) {
+        if (p1.z > p2.z && p1.z > p3.z && p1.z > p4.z) {
             int surfCen = (p2.z + p3.z + p4.z) / 3;
             if (p1.z > surfCen) {
                 cout << "\n\n\t Surface " << p2.name << p3.name << p4.name << " is invisible.\n\n";
@@ -615,7 +679,7 @@ public:
             }
         }
         // точка p2 ближе остальных к экрану
-        if (p2.z >= p1.z && p2.z >= p3.z && p2.z >= p4.z) {
+        if (p2.z > p1.z && p2.z > p3.z && p2.z > p4.z) {
             int surfCen = (p1.z + p3.z + p4.z) / 3;
             if (p2.z > surfCen) {
                 cout << "\n\n\t Surface " << p1.name << p3.name << p4.name << " is invisible.\n\n";
@@ -634,7 +698,7 @@ public:
             }
         }
         // точка p3 ближе остальных к экрану
-        if (p3.z >= p2.z && p3.z >= p1.z && p3.z >= p4.z) {
+        if (p3.z > p2.z && p3.z > p1.z && p3.z > p4.z) {
             int surfCen = (p2.z + p1.z + p4.z) / 3;
             if (p3.z > surfCen) {
                 cout << "\n\n\t Surface " << p2.name << p1.name << p4.name << " is invisible.\n\n";
@@ -653,7 +717,7 @@ public:
             }
         }
         // точка p4 ближе остальных к экрану
-        if (p4.z >= p2.z && p4.z >= p3.z && p4.z >= p1.z) {
+        if (p4.z > p2.z && p4.z > p3.z && p4.z > p1.z) {
             int surfCen = (p2.z + p3.z + p1.z) / 3;
             if (p4.z > surfCen) {
                 cout << "\n\n\t Surface " << p2.name << p3.name << p1.name << " is invisible.\n\n";
@@ -673,12 +737,100 @@ public:
         }
 
 
+
+
+
+
+        // точка p1 дальше остальных от экрана
+        if (p1.z < p2.z && p1.z < p3.z && p1.z < p4.z) {
+            int surfCen = (p2.z + p3.z + p4.z) / 3;
+            if (p1.z < surfCen) {
+                cout << "\n\n\t ONLY Surface " << p2.name << p3.name << p4.name << " is visible.\n\n";
+                if (strstr(ABC.name, p1.name))
+                    ABC.isVisible = false;
+                else ABC.isVisible = true;
+                if (strstr(ADC.name, p1.name))
+                    ADC.isVisible = false;
+                else ADC.isVisible = true;
+                if (strstr(ABD.name, p1.name))
+                    ABD.isVisible = false;
+                else ABD.isVisible = true;
+                if (strstr(BCD.name, p1.name))
+                    BCD.isVisible = false;
+                else BCD.isVisible = true;
+            }
+        }
+
+        // точка p2 дальше остальных от экрана
+        if (p2.z < p1.z && p2.z < p3.z && p2.z < p4.z) {
+            int surfCen = (p1.z + p3.z + p4.z) / 3;
+            if (p2.z < surfCen) {
+                cout << "\n\n\t ONLY Surface " << p1.name << p3.name << p4.name << " is visible.\n\n";
+                if (strstr(ABC.name, p2.name))
+                    ABC.isVisible = false;
+                else ABC.isVisible = true;
+                if (strstr(ADC.name, p2.name))
+                    ADC.isVisible = false;
+                else ADC.isVisible = true;
+                if (strstr(ABD.name, p2.name))
+                    ABD.isVisible = false;
+                else ABD.isVisible = true;
+                if (strstr(BCD.name, p2.name))
+                    BCD.isVisible = false;
+                else BCD.isVisible = true;
+            }
+        }
+
+        // точка p3 дальше остальных от экрана
+        if (p3.z < p1.z && p3.z < p2.z && p3.z < p4.z) {
+            int surfCen = (p1.z + p2.z + p4.z) / 3;
+            if (p3.z < surfCen) {
+                cout << "\n\n\t ONLY Surface " << p1.name << p2.name << p4.name << " is visible.\n\n";
+                if (strstr(ABC.name, p3.name))
+                    ABC.isVisible = false;
+                else ABC.isVisible = true;
+                if (strstr(ADC.name, p3.name))
+                    ADC.isVisible = false;
+                else ADC.isVisible = true;
+                if (strstr(ABD.name, p3.name))
+                    ABD.isVisible = false;
+                else ABD.isVisible = true;
+                if (strstr(BCD.name, p3.name))
+                    BCD.isVisible = false;
+                else BCD.isVisible = true;
+            }
+        }
+
+        // точка p4 дальше остальных от экрана
+        if (p4.z < p2.z && p4.z < p3.z && p4.z < p1.z) {
+            int surfCen = (p2.z + p3.z + p1.z) / 3;
+            if (p4.z < surfCen) {
+                cout << "\n\n\t ONLY Surface " << p2.name << p3.name << p1.name << " is visible.\n\n";
+                if (strstr(ABC.name, p4.name))
+                    ABC.isVisible = false;
+                else ABC.isVisible = true;
+                if (strstr(ADC.name, p4.name))
+                    ADC.isVisible = false;
+                else ADC.isVisible = true;
+                if (strstr(ABD.name, p4.name))
+                    ABD.isVisible = false;
+                else ABD.isVisible = true;
+                if (strstr(BCD.name, p4.name))
+                    BCD.isVisible = false;
+                else BCD.isVisible = true;
+            }
+        }
+*/
+
+
+
+
         return 1;
     }
 
 
 
-
+    // заливка одной поверхности
     void fill(Point p1, Point p2, Point p3, COLORREF col) {
         // Учёт координаты z при отрисовке в двумерном пространстве
         // Точка пересечения смотрится не прямо вдоль оси z, а под углом 45, как видит пользователь
@@ -719,9 +871,8 @@ public:
             line(y_const[0], y_const[1], y_const[2], y_const[3]);
         }
     }
-
     
-    // закраска
+    // закраска всех видимых поверхностей
     void colouring() {
         int abcd = seenL(A, B, C, D);
         int acbd = seenL(A, C, B, D);
@@ -750,7 +901,6 @@ public:
             cout << "\n\tBCD is visible\n";
             fill(B, C, D, BCD.colour);
         }
-
 
 
     }
