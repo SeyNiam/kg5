@@ -5,6 +5,7 @@
 // + Залить на Гит
 // + Научиться определять видимость
 // + Сделать с закраской
+// + Подчистить до красоты
 // - Отчёт
 //
 
@@ -15,15 +16,14 @@
 #pragma comment(lib,"graphics.lib")
 
 #define P 3.14
-#define TEXTCOL 13
-#define MAINCOL 13 //11 
+#define TEXTCOL 13 // маджента
+#define MAINCOL 13 
 #define WHITE 15
 #define BLACK 0
 
 #define GREEN 2
 #define CYAN 11
 #define RED	4
-//#define MAGENTA 13
 #define YELLOW	14
 
 using namespace std;
@@ -86,6 +86,7 @@ public:
     }
 };
 
+// класс поверхностей
 class Surface{
 public:
     char* name;
@@ -117,7 +118,6 @@ public:
     Surface ADC = Surface(name_ADC, GREEN);
     Surface ABD = Surface(name_ABD, CYAN);
     Surface BCD = Surface(name_BCD, YELLOW);
-
 
     // конструктор
     Piramid() {
@@ -152,6 +152,7 @@ public:
         char minus[20] = "- - Scale down";
         char other[20] = "Any other - Exit";
 
+        // вывод инструкций
         outtextxy(1140, 20, w);
         outtextxy(1140, 40, a);
         outtextxy(1140, 60, s);
@@ -164,26 +165,25 @@ public:
         outtextxy(1140, 200, minus);
         outtextxy(1140, 220, other);
 
+        // вывод имён точек
         setcolor(TEXTCOL);
         A.namePoint(A.name);
         B.namePoint(B.name);
         C.namePoint(C.name);
         D.namePoint(D.name);
 
-        // Нижнее основание
+        // нижнее основание
         line_DDA(A.x, A.y, A.z, B.x, B.y, B.z, col); // линия 1
         line_DDA(B.x, B.y, B.z, C.x, C.y, C.z, col); // линия 2
         line_DDA(C.x, C.y, C.z, A.x, A.y, A.z, col); // линия 3
         
-        // Боковые грани
+        // боковые грани
         line_DDA(D.x, D.y, D.z, A.x, A.y, A.z, col); // линия 4
         line_DDA(D.x, D.y, D.z, B.x, B.y, B.z, col); // линия 5
         line_DDA(D.x, D.y, D.z, C.x, C.y, C.z, col); // линия 6
 
-
-
+        // закраска граней фигуры
         colouring();
-
 
     }
 
@@ -288,7 +288,6 @@ public:
         D = rotDotX(u, ang, Cen, D);
     }
 
-
     // масштабирование одной точки
     Point dotScale(float e, Point Cen, Point L) {
         // L.x
@@ -330,62 +329,39 @@ public:
 
     }
 
-
-
-
     Point dot;  // точка пересечения
-
     // проверка на пересечение линий
-    bool cross(Point a1, Point a2, Point a3, Point a4) { // сделать поправку на то, что z не ровно к юзеру, а под углом в 45 градусов
-
+    bool cross(Point a1, Point a2, Point a3, Point a4) {
         Point p1 = a1, p2 = a2, p3 = a3, p4 = a4;
 
-        // Учёт координаты z при отрисовке в двумерном пространстве
-        // Точка пересечения смотрится не прямо вдоль оси z, а под углом 45, как видит пользователь
+        // учёт координаты z при отрисовке в двумерном пространстве
+        // точка пересечения смотрится не прямо вдоль оси z, а под углом 45, как видит пользователь
         p1.x -= 0.5 * p1.z;        p1.y += 0.5 * p1.z;
         p2.x -= 0.5 * p2.z;        p2.y += 0.5 * p2.z;
         p3.x -= 0.5 * p3.z;        p3.y += 0.5 * p3.z;
         p4.x -= 0.5 * p4.z;        p4.y += 0.5 * p4.z;
-        
-        /* Мы подразумеваем, что начальная точка находится левее конечной относительно оси абсцисс (оси X).
-       Также возможен вариант, когда точки имеют одинаковую абсциссу, то есть отрезок является вертикальным.
-       В общем случае должно выполняться условие: p1.x <= p2.x и p3.x <= p4.x.
-       Но если вдруг программист задал точки отрезка не по порядку, мы расставим их, как следует:
-        */
-
-       if (p2.x < p1.x) {
+                
+        // расстановка точек так, чтобы начальная точка находилась левее конечной относительно оси x
+        if (p2.x < p1.x) {
            Point tmp = p1;
            p1 = p2;
            p2 = tmp;
        }
-       if (p4.x < p3.x) {
+        if (p4.x < p3.x) {
            Point tmp = p3;
            p3 = p4;
            p4 = tmp;
        }
 
+        // если конец первого отрезка находится левее начала второго, то отрезки точно не пересекаются
+        if (p2.x < p3.x) { return false; }
 
-
-       /* Если конец первого отрезка находится левее начала правого отрезка (по оси X),
-       то отрезки точно не имеют точки пересечения.
-        */
-
-       if (p2.x < p3.x) { return false; }
-
-
-       /* В случае проверки условия вертикальности обоих отрезков, выражение (p1.x — p2.x == 0) && (p3.x — p4.x == 0) должно быть истинным.
-       Два отрезка будут иметь точку пересечения в том случае, когда их абсцисса одинакова (для этого достаточно условия p1.x == p3.x)
-       и они имеют общую часть по оси ординат (общий Y); в противном случае делаем вывод, что они не пересекаются.
-       Составить условие для проверки существования общего Y мысленно довольно сложно.
-       Поэтому мы поступим проще: составим условие для проверки того, что отрезки не имеют общего Y и возьмём от него отрицание.
-        */
-
-       //если оба отрезка вертикальные
-       if ( (p1.x - p2.x == 0) && (p3.x - p4.x == 0) ) {
-           //если они лежат на одном X
+        // если оба отрезка вертикальные
+        if ( (p1.x - p2.x == 0) && (p3.x - p4.x == 0) ) {
+           // если они лежат на одном X
            if (p1.x == p3.x) {
-               //проверим пересекаются ли они, т.е. есть ли у них общий Y
-               //для этого возьмём отрицание от случая, когда они НЕ пересекаются
+               // проверка пересекаются ли они, т.е. есть ли у них общий Y
+               // берётся отрицание от случая, когда они НЕ пересекаются
                if (!(   ( max(p1.y, p2.y) < min(p3.y, p4.y) )    ||
                         ( min(p1.y, p2.y) > max(p3.y, p4.y) )    )) {
                    dot.x = p1.x;
@@ -396,47 +372,16 @@ public:
            return false;
        }
 
-
-       /* Каждый отрезок — это часть прямой.
-       Уравнение прямой в общем случае имеет всем нам знакомый вид:
-       A * x + b = y (1)
-       Для случая с двумя прямыми получаем систему уравнений (2):
-       A1 * x + b1 = y
-       A2 * x + b2 = y
-       Решив её, мы получим координаты точки (x, y) пересечения двух прямых.
-       Но у нас нет значений параметров A1, A2, b1 и b2.
-       Найдём их.
-       Параметр A — это тангенс угла между прямой и осью X.
-       Вычислим его по определению:
-       тангенс — это отношение противолежащего катета к прилежащему.
-       A1 = (p1.y — p2.y) / (p1.x — p2.x) (3)
-       A2 = (p3.y — p4.y) / (p3.x — p4.x) (4)
-       Параметр b найдём для каждой прямой, выразив его из уравнений (2):
-       b1 = p1.y — A1 * p1.x     =     p2.y — A1 * p2.x (5)
-       b2 = p3.y — A2 * p3.x     =     p4.y — A2 * p4.x (6)
-       Теперь, зная все параметры, решим систему уравнений (2).
-       Найдём абсциссу точки пересечения прямых (обозначим её Xa):
-       Xa = (b2 — b1) / (A1 — A2)  */
-
-       /* Предположим, что x вертикального отрезка является абсциссой точки пересечения отрезков: Xa = p1.x.
-       Параметры A2 и b2 найдём, как это было описано выше.
-       Также вычислим ординату предполагаемой точки пересечения (используя формулу 1):
-       Ya = A2 * Xa + b2
-       Найденная точка (Xa, Ya) будет являться точкой пересечения двух отрезков только в том случае,
-       если p3.x <= Xa <= p4.x и Ya входит в интервал вертикального отрезка по Y.
-       В противном случае — отрезки не пересекаются.
-        */
-
-       //если первый отрезок вертикальный
-       if (p1.x - p2.x == 0) {
-           //найдём Xa, Ya - точки пересечения двух прямых
+        // если первый отрезок вертикальный
+        if (p1.x - p2.x == 0) {
+           // Xa, Ya - точки пересечения двух прямых
            double Xa = p1.x;
-           double A2 = (p3.y - p4.y) / (p3.x - p4.x);
-           double b2 = p3.y - A2 * p3.x;
+           double A2 = (p3.y - p4.y) / (p3.x - p4.x); // A — тангенс угла между прямой и осью x
+           double b2 = p3.y - A2 * p3.x; // b — смешение относительно оси
            double Ya = A2 * Xa + b2;
 
-           if (p3.x <= Xa && p4.x >= Xa &&
-               min(p1.y, p2.y) <= Ya && max(p1.y, p2.y) >= Ya) {
+           // проверка, что точка принадлежит отрезкам
+           if (p3.x <= Xa && p4.x >= Xa && min(p1.y, p2.y) <= Ya && max(p1.y, p2.y) >= Ya) {
                dot.x = Xa;
                dot.y = Ya;
                return true;
@@ -445,17 +390,15 @@ public:
            return false;
        }
 
-
-       //если второй отрезок вертикальный
-       if (p3.x - p4.x == 0) {
-           //найдём Xa, Ya - точки пересечения двух прямых
+        // если второй отрезок вертикальный
+        if (p3.x - p4.x == 0) {
+           // Xa, Ya - точки пересечения двух прямых
            double Xa = p3.x;
            double A1 = (p1.y - p2.y) / (p1.x - p2.x);
            double b1 = p1.y - A1 * p1.x;
            double Ya = A1 * Xa + b1;
 
-           if (p1.x <= Xa && p2.x >= Xa &&
-               min(p3.y, p4.y) <= Ya && max(p3.y, p4.y) >= Ya) {
+           if (p1.x <= Xa && p2.x >= Xa && min(p3.y, p4.y) <= Ya && max(p3.y, p4.y) >= Ya) {
                dot.x = Xa;
                dot.y = Ya;
                return true;
@@ -464,32 +407,23 @@ public:
            return false;
        }
 
+        // оба отрезка невертикальные
+        double A1 = (p1.y - p2.y) / (p1.x - p2.x);
+        double A2 = (p3.y - p4.y) / (p3.x - p4.x);
+        double b1 = p1.y - A1 * p1.x;
+        double b2 = p3.y - A2 * p3.x;
 
-       /* Сначала найдём параметры A1, A2, b1 и b2 по формулам 3, 4, 5, 6.
-       Затем проверим равенство A1 == A2.
-       Если оно верно, то значит отрезки параллельны, а следовательно не пересекаются — возвращаем false.
-       Кроме того, данная проверка позволяет избежать деления на ноль при нахождении Xa в выражении 7.
-       Далее вычисляем Xa (по формуле 7).
-       После необходимо проверить входит ли Xa в пересечение проекций обоих отрезков на ось X.
-       Входит — возвращаем true, не входит — false.
-        */
+        if (A1 == A2) { return false; } // отрезки параллельны
 
-       //оба отрезка невертикальные
-       double A1 = (p1.y - p2.y) / (p1.x - p2.x);
-       double A2 = (p3.y - p4.y) / (p3.x - p4.x);
-       double b1 = p1.y - A1 * p1.x;
-       double b2 = p3.y - A2 * p3.x;
+        // Xa - абсцисса точки пересечения двух прямых
+        double Xa = (b2 - b1) / (A1 - A2);
+        double Ya = A1 * Xa + b1; // Ya - ордината
 
-       if (A1 == A2) { return false; } //отрезки параллельны
-
-       //Xa - абсцисса точки пересечения двух прямых
-       double Xa = (b2 - b1) / (A1 - A2);
-       double Ya = A1 * Xa + b1; 
-
-       if ((Xa < max(p1.x, p3.x)) || (Xa > min(p2.x, p4.x))) {
-           return false; //точка Xa находится вне пересечения проекций отрезков на ось X
+        // проверка, что точка персечения находится в границах отрезка
+        if ((Xa < max(p1.x, p3.x)) || (Xa > min(p2.x, p4.x))) {
+           return false; // точка Xa находится вне пересечения проекций отрезков на ось X
        }
-       else {
+        else {
            dot.x = Xa;
            dot.y = Ya;
            return true;
@@ -505,14 +439,14 @@ public:
             cout << "Lines " << One.name << Two.name << " and " << Three.name << Four.name << " cross at " << dot.x << ";" << dot.y << ".\n";
 
             // сравнение координаты z для точек с координатами точки пересечения на каждой из линий
-            int x1 = One.x - 0.5 * One.z, x2 = Two.x - 0.5 * Two.z; //  Учёт координаты z при отрисовке в двумерном пространстве
+            int x1 = One.x - 0.5 * One.z, x2 = Two.x - 0.5 * Two.z; // учёт координаты z при отрисовке в двумерном пространстве
             int z1 = One.z, z2 = Two.z;
             int x = dot.x;
 
             if ((x2 - x1) != 0) {
 
                 int zOT = (((x - x1) * (z2 - z1)) / (x2 - x1)) + z1;
-                x1 = Three.x - 0.5 * Three.z, x2 = Four.x - 0.5 * Four.z; //  Учёт координаты z при отрисовке в двумерном пространстве
+                x1 = Three.x - 0.5 * Three.z, x2 = Four.x - 0.5 * Four.z; // учёт координаты z при отрисовке в двумерном пространстве
                 z1 = Three.z, z2 = Four.z;
 
                 if ((x2 - x1) != 0) {
@@ -520,11 +454,13 @@ public:
 
                     if (zOT == zTF)
                         cout << "\n\n\tsame point\n\n";
-                    else if (zOT > zTF) {
+                    // если первая линия ближе к наблюдателю, чем вторая
+                    else if (zOT > zTF) { 
                         cout << "line " << Three.name << Four.name << " is not seen.\n";
+                        // если плоскость содержит обе точки невидимой линии
                         if (strstr(ABC.name, Three.name) && strstr(ABC.name, Four.name))
-                            ABC.isVisible = false;
-                        else ABC.isVisible = true;
+                            ABC.isVisible = false; // то и она сама не видна
+                        else ABC.isVisible = true; // иначе видна
                         if (strstr(ADC.name, Three.name) && strstr(ADC.name, Four.name))
                             ADC.isVisible = false;
                         else ADC.isVisible = true;
@@ -535,6 +471,7 @@ public:
                             BCD.isVisible = false;
                         else BCD.isVisible = true;
                     }
+                    // если вторая линия ближе к наблюдателю, чем первая
                     else if(zOT < zTF){ 
                         cout << "line " << One.name << Two.name << " is not seen.\n"; 
                         if (strstr(ABC.name, One.name) && strstr(ABC.name, Two.name))
@@ -562,31 +499,23 @@ public:
     }
 
     // видимость поверхностей, если линии не пересекаются
-    int seenS(Point a1, Point a2, Point a3, Point a4) {
+    void seenS(Point a1, Point a2, Point a3, Point a4) {
         Point p1 = a1, p2 = a2, p3 = a3, p4 = a4;
 
-        // Учёт координаты z при отрисовке в двумерном пространстве
-        // Точка пересечения смотрится не прямо вдоль оси z, а под углом 45, как видит пользователь
+        // учёт координаты z при отрисовке в двумерном пространстве
+        // точка пересечения смотрится не прямо вдоль оси z, а под углом 45, как видит пользователь
         p1.x -= 0.5 * p1.z, p1.y += 0.5 * p1.z;
         p2.x -= 0.5 * p2.z, p2.y += 0.5 * p2.z;
         p3.x -= 0.5 * p3.z, p3.y += 0.5 * p3.z;
         p4.x -= 0.5 * p4.z, p4.y += 0.5 * p4.z;
 
-        // сброс к базовому состоянию 
-        ABC.isVisible = true;
-        ADC.isVisible = true;
-        ABD.isVisible = true;
-        BCD.isVisible = true;
-
-
-        // нет пересечениий -- одна из точек в центре на xy
+        // нет пересечениий -- одна из точек в центре на xoy
         // какая к центру ближе, у той и смотрим z
-        Point centerOfAll;
+        Point centerOfAll; // точка центра фигуры
         centerOfAll.x = (p1.x + p2.x + p3.x + p4.x) / 4;
         centerOfAll.y = (p1.y + p2.y + p3.y + p4.y) / 4;
-        //centerOfAll.z = (p1.z + p2.z + p3.z + p4.z) / 4;
 
-        int p1Prox, p2Prox, p3Prox, p4Prox;
+        int p1Prox, p2Prox, p3Prox, p4Prox; // расстояние от каждой вершины до центра фигуры на плоскости xoy
         p1Prox = abs(p1.x - centerOfAll.x) + abs(p1.y - centerOfAll.y);
         p2Prox = abs(p2.x - centerOfAll.x) + abs(p2.y - centerOfAll.y);
         p3Prox = abs(p3.x - centerOfAll.x) + abs(p3.y - centerOfAll.y);
@@ -594,11 +523,11 @@ public:
 
         int res = min(min(p1Prox, p2Prox), min(p3Prox, p4Prox)); // расстояние от центра фигуры до ближайшей точки
 
-        Point closestPt;
-        float surfCen;
-        if (res == p1Prox) {
-            closestPt = p1;
-            surfCen = (p2.z + p3.z + p4.z) / 3;
+        Point closestPt; // точка, ближайшая к центру фигуры
+        float surfCen; // координата z центра фигуры
+        if (res == p1Prox) { // если p1Prox ближайшее расстояниа
+            closestPt = p1; // то точка p1 - ближайшая точка
+            surfCen = (p2.z + p3.z + p4.z) / 3; // находитсякоордината z центра плоскости, не содержащей эту точку
         }
         if (res == p2Prox) {
             closestPt = p2;
@@ -617,11 +546,16 @@ public:
         if (closestPt.z >= surfCen) {
             cout << "\n\n\t THE Point " << closestPt.name << " is VISIBLE.\n\n";
 
+            // по умолчанию все поверхности видны
+            ABC.isVisible = true;
+            ADC.isVisible = true;
+            ABD.isVisible = true;
+            BCD.isVisible = true;
+
             // если поверхность не содержит видимой точки
             if (!strstr(ABC.name, closestPt.name))
                 ABC.isVisible = false; // то эту поверхность не видно
             else ABC.isVisible = true; // иначе видно
-
             if (!strstr(ADC.name, closestPt.name))
                 ADC.isVisible = false;
             else ADC.isVisible = true;
@@ -634,7 +568,8 @@ public:
         }
         else { // ближайшая к центру точка надожится дальше от зрителя, чем центр
             cout << "\n\n\t THE Point " << closestPt.name << " is NOT VISIBLE AT ALL.\n\n";
-            
+
+            // по умолчанию ни одна поверхность не видна
             ABC.isVisible = false;
             ADC.isVisible = false;
             ABD.isVisible = false;
@@ -643,7 +578,6 @@ public:
             // если плоскость НЕ содержит НЕВИДИМУЮ точку
             if (!strstr(ABC.name, closestPt.name))
                 ABC.isVisible = true; // то она видна
-
             if (!strstr(ADC.name, closestPt.name))
                 ADC.isVisible = true;
             if (!strstr(ABD.name, closestPt.name))
@@ -651,188 +585,14 @@ public:
             if (!strstr(BCD.name, closestPt.name))
                 BCD.isVisible = true;
 
-
-        }
-        
-
-
-        // gj ,kb;fqitq r yf,k.lfnt. dghbywbgt
-        /*
-        // точка p1 ближе остальных к экрану
-        if (p1.z > p2.z && p1.z > p3.z && p1.z > p4.z) {
-            int surfCen = (p2.z + p3.z + p4.z) / 3;
-            if (p1.z > surfCen) {
-                cout << "\n\n\t Surface " << p2.name << p3.name << p4.name << " is invisible.\n\n";
-                if (!strstr(ABC.name, p1.name))
-                    ABC.isVisible = false;
-                else ABC.isVisible = true;
-                if (!strstr(ADC.name, p1.name))
-                    ADC.isVisible = false;
-                else ADC.isVisible = true;
-                if (!strstr(ABD.name, p1.name))
-                    ABD.isVisible = false;
-                else ABD.isVisible = true;
-                if (!strstr(BCD.name, p1.name))
-                    BCD.isVisible = false;
-                else BCD.isVisible = true;
-            }
-        }
-        // точка p2 ближе остальных к экрану
-        if (p2.z > p1.z && p2.z > p3.z && p2.z > p4.z) {
-            int surfCen = (p1.z + p3.z + p4.z) / 3;
-            if (p2.z > surfCen) {
-                cout << "\n\n\t Surface " << p1.name << p3.name << p4.name << " is invisible.\n\n";
-                if (!strstr(ABC.name, p2.name))
-                    ABC.isVisible = false;
-                else ABC.isVisible = true;
-                if (!strstr(ADC.name, p2.name))
-                    ADC.isVisible = false;
-                else ADC.isVisible = true;
-                if (!strstr(ABD.name, p2.name))
-                    ABD.isVisible = false;
-                else ABD.isVisible = true;
-                if (!strstr(BCD.name, p2.name))
-                    BCD.isVisible = false;
-                else BCD.isVisible = true;
-            }
-        }
-        // точка p3 ближе остальных к экрану
-        if (p3.z > p2.z && p3.z > p1.z && p3.z > p4.z) {
-            int surfCen = (p2.z + p1.z + p4.z) / 3;
-            if (p3.z > surfCen) {
-                cout << "\n\n\t Surface " << p2.name << p1.name << p4.name << " is invisible.\n\n";
-                if (!strstr(ABC.name, p3.name))
-                    ABC.isVisible = false;
-                else ABC.isVisible = true;
-                if (!strstr(ADC.name, p3.name))
-                    ADC.isVisible = false;
-                else ADC.isVisible = true;
-                if (!strstr(ABD.name, p3.name))
-                    ABD.isVisible = false;
-                else ABD.isVisible = true;
-                if (!strstr(BCD.name, p3.name))
-                    BCD.isVisible = false;
-                else BCD.isVisible = true;
-            }
-        }
-        // точка p4 ближе остальных к экрану
-        if (p4.z > p2.z && p4.z > p3.z && p4.z > p1.z) {
-            int surfCen = (p2.z + p3.z + p1.z) / 3;
-            if (p4.z > surfCen) {
-                cout << "\n\n\t Surface " << p2.name << p3.name << p1.name << " is invisible.\n\n";
-                if (!strstr(ABC.name, p4.name))
-                    ABC.isVisible = false;
-                else ABC.isVisible = true;
-                if (!strstr(ADC.name, p4.name))
-                    ADC.isVisible = false;
-                else ADC.isVisible = true;
-                if (!strstr(ABD.name, p4.name))
-                    ABD.isVisible = false;
-                else ABD.isVisible = true;
-                if (!strstr(BCD.name, p4.name))
-                    BCD.isVisible = false;
-                else BCD.isVisible = true;
-            }
         }
 
-
-
-
-
-
-        // точка p1 дальше остальных от экрана
-        if (p1.z < p2.z && p1.z < p3.z && p1.z < p4.z) {
-            int surfCen = (p2.z + p3.z + p4.z) / 3;
-            if (p1.z < surfCen) {
-                cout << "\n\n\t ONLY Surface " << p2.name << p3.name << p4.name << " is visible.\n\n";
-                if (strstr(ABC.name, p1.name))
-                    ABC.isVisible = false;
-                else ABC.isVisible = true;
-                if (strstr(ADC.name, p1.name))
-                    ADC.isVisible = false;
-                else ADC.isVisible = true;
-                if (strstr(ABD.name, p1.name))
-                    ABD.isVisible = false;
-                else ABD.isVisible = true;
-                if (strstr(BCD.name, p1.name))
-                    BCD.isVisible = false;
-                else BCD.isVisible = true;
-            }
-        }
-
-        // точка p2 дальше остальных от экрана
-        if (p2.z < p1.z && p2.z < p3.z && p2.z < p4.z) {
-            int surfCen = (p1.z + p3.z + p4.z) / 3;
-            if (p2.z < surfCen) {
-                cout << "\n\n\t ONLY Surface " << p1.name << p3.name << p4.name << " is visible.\n\n";
-                if (strstr(ABC.name, p2.name))
-                    ABC.isVisible = false;
-                else ABC.isVisible = true;
-                if (strstr(ADC.name, p2.name))
-                    ADC.isVisible = false;
-                else ADC.isVisible = true;
-                if (strstr(ABD.name, p2.name))
-                    ABD.isVisible = false;
-                else ABD.isVisible = true;
-                if (strstr(BCD.name, p2.name))
-                    BCD.isVisible = false;
-                else BCD.isVisible = true;
-            }
-        }
-
-        // точка p3 дальше остальных от экрана
-        if (p3.z < p1.z && p3.z < p2.z && p3.z < p4.z) {
-            int surfCen = (p1.z + p2.z + p4.z) / 3;
-            if (p3.z < surfCen) {
-                cout << "\n\n\t ONLY Surface " << p1.name << p2.name << p4.name << " is visible.\n\n";
-                if (strstr(ABC.name, p3.name))
-                    ABC.isVisible = false;
-                else ABC.isVisible = true;
-                if (strstr(ADC.name, p3.name))
-                    ADC.isVisible = false;
-                else ADC.isVisible = true;
-                if (strstr(ABD.name, p3.name))
-                    ABD.isVisible = false;
-                else ABD.isVisible = true;
-                if (strstr(BCD.name, p3.name))
-                    BCD.isVisible = false;
-                else BCD.isVisible = true;
-            }
-        }
-
-        // точка p4 дальше остальных от экрана
-        if (p4.z < p2.z && p4.z < p3.z && p4.z < p1.z) {
-            int surfCen = (p2.z + p3.z + p1.z) / 3;
-            if (p4.z < surfCen) {
-                cout << "\n\n\t ONLY Surface " << p2.name << p3.name << p1.name << " is visible.\n\n";
-                if (strstr(ABC.name, p4.name))
-                    ABC.isVisible = false;
-                else ABC.isVisible = true;
-                if (strstr(ADC.name, p4.name))
-                    ADC.isVisible = false;
-                else ADC.isVisible = true;
-                if (strstr(ABD.name, p4.name))
-                    ABD.isVisible = false;
-                else ABD.isVisible = true;
-                if (strstr(BCD.name, p4.name))
-                    BCD.isVisible = false;
-                else BCD.isVisible = true;
-            }
-        }
-*/
-
-
-
-
-        return 1;
     }
-
-
 
     // заливка одной поверхности
     void fill(Point p1, Point p2, Point p3, COLORREF col) {
-        // Учёт координаты z при отрисовке в двумерном пространстве
-        // Точка пересечения смотрится не прямо вдоль оси z, а под углом 45, как видит пользователь
+        // учёт координаты z при отрисовке в двумерном пространстве
+        // точка пересечения смотрится не прямо вдоль оси z, а под углом 45, как видит пользователь
         p1.x -= 0.5 * p1.z, p1.y += 0.5 * p1.z;
         p2.x -= 0.5 * p2.z, p2.y += 0.5 * p2.z;
         p3.x -= 0.5 * p3.z, p3.y += 0.5 * p3.z;
@@ -855,12 +615,14 @@ public:
             swap(y2, y3);
             swap(x2, x3);
         }
+
         float y_const[4]; // x0, y0, x1, y1
+
         // y1 - наивысшая точка, y2 - средняя точка, y3 - низшая точка
         for (int y = y1; y <= y2; y++) {
-            y_const[1] = y_const[3] = y;
-            y_const[0] = x1 + (x2 - x1) * ((y - y1) / (y2 - y1));
-            y_const[2] = x1 + (x3 - x1) * ((y - y1) / (y3 - y1));
+            y_const[1] = y_const[3] = y; // y0 y1
+            y_const[0] = x1 + (x2 - x1) * ((y - y1) / (y2 - y1)); // x0
+            y_const[2] = x1 + (x3 - x1) * ((y - y1) / (y3 - y1)); // x1
             line(y_const[0], y_const[1], y_const[2], y_const[3]);
         }
         for (int y = y2; y <= y3; y++) {
@@ -873,7 +635,7 @@ public:
     
     // закраска всех видимых поверхностей
     void colouring() {
-        int abcd = seenL(A, B, C, D); // иногда багуется
+        int abcd = seenL(A, B, C, D);
         int acbd = seenL(A, C, B, D);
         int adbc = seenL(A, D, B, C);
 
@@ -882,7 +644,6 @@ public:
             // определение видимости плоскости относительно не принадлежащей ей точки 
             seenS(A, B, C, D);
         }
-
 
         if (ABC.isVisible) {
             cout << "\n\tABC is visible\n";
@@ -900,7 +661,6 @@ public:
             cout << "\n\tBCD is visible\n";
             fill(B, C, D, BCD.colour);
         }
-
 
     }
 
