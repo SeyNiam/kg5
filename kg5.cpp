@@ -4,8 +4,7 @@
 // + Убрать лишние точки и линии из 4 для Макса
 // + Залить на Гит
 // + Научиться определять видимость
-// - Сделать с пунктиром
-// - Сделать с закраской
+// + Сделать с закраской
 // - Отчёт
 //
 
@@ -334,7 +333,7 @@ public:
 
 
 
-    float dot[2];  // точка пересечения
+    Point dot;  // точка пересечения
 
     // проверка на пересечение линий
     bool cross(Point a1, Point a2, Point a3, Point a4) { // сделать поправку на то, что z не ровно к юзеру, а под углом в 45 градусов
@@ -389,9 +388,8 @@ public:
                //для этого возьмём отрицание от случая, когда они НЕ пересекаются
                if (!(   ( max(p1.y, p2.y) < min(p3.y, p4.y) )    ||
                         ( min(p1.y, p2.y) > max(p3.y, p4.y) )    )) {
-
-                   dot[0] = p1.x;
-                   dot[1] = (p1.y + p2.y) / 2;
+                   dot.x = p1.x;
+                   dot.y = (p1.y + p2.y) / 2;
                    return true;
                }
            }
@@ -439,8 +437,8 @@ public:
 
            if (p3.x <= Xa && p4.x >= Xa &&
                min(p1.y, p2.y) <= Ya && max(p1.y, p2.y) >= Ya) {
-               dot[0] = Xa;
-               dot[1] = Ya;
+               dot.x = Xa;
+               dot.y = Ya;
                return true;
            }
 
@@ -458,8 +456,8 @@ public:
 
            if (p1.x <= Xa && p2.x >= Xa &&
                min(p3.y, p4.y) <= Ya && max(p3.y, p4.y) >= Ya) {
-               dot[0] = Xa;
-               dot[1] = Ya;
+               dot.x = Xa;
+               dot.y = Ya;
                return true;
            }
 
@@ -492,8 +490,8 @@ public:
            return false; //точка Xa находится вне пересечения проекций отрезков на ось X
        }
        else {
-           dot[0] = Xa;
-           dot[1] = Ya;
+           dot.x = Xa;
+           dot.y = Ya;
            return true;
        }
 
@@ -504,17 +502,17 @@ public:
 
         if (cross(One, Two, Three, Four)) {
 
-            cout << "Lines " << One.name << Two.name << " and " << Three.name << Four.name << " cross at " << dot[0] << ";" << dot[1] << ".\n";
+            cout << "Lines " << One.name << Two.name << " and " << Three.name << Four.name << " cross at " << dot.x << ";" << dot.y << ".\n";
 
             // сравнение координаты z для точек с координатами точки пересечения на каждой из линий
-            int x1 = One.x, x2 = Two.x;
+            int x1 = One.x - 0.5 * One.z, x2 = Two.x - 0.5 * Two.z; //  Учёт координаты z при отрисовке в двумерном пространстве
             int z1 = One.z, z2 = Two.z;
-            int x = dot[0];
+            int x = dot.x;
 
             if ((x2 - x1) != 0) {
 
                 int zOT = (((x - x1) * (z2 - z1)) / (x2 - x1)) + z1;
-                x1 = Three.x, x2 = Four.x;
+                x1 = Three.x - 0.5 * Three.z, x2 = Four.x - 0.5 * Four.z; //  Учёт координаты z при отрисовке в двумерном пространстве
                 z1 = Three.z, z2 = Four.z;
 
                 if ((x2 - x1) != 0) {
@@ -537,7 +535,7 @@ public:
                             BCD.isVisible = false;
                         else BCD.isVisible = true;
                     }
-                    else { 
+                    else if(zOT < zTF){ 
                         cout << "line " << One.name << Two.name << " is not seen.\n"; 
                         if (strstr(ABC.name, One.name) && strstr(ABC.name, Two.name))
                             ABC.isVisible = false;
@@ -555,6 +553,7 @@ public:
 
                 }
             }
+            
 
             return 1;
         }
@@ -874,7 +873,7 @@ public:
     
     // закраска всех видимых поверхностей
     void colouring() {
-        int abcd = seenL(A, B, C, D);
+        int abcd = seenL(A, B, C, D); // иногда багуется
         int acbd = seenL(A, C, B, D);
         int adbc = seenL(A, D, B, C);
 
